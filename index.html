@@ -1,58 +1,42 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>July Trip CPK Dashboard</title>
-<script src="data.js"></script>
+<title>July Trip Utilisation Dashboard</title><script src="data.js"></script>
 <style>
 :root{--navy:#102a43;--blue:#2867b2;--bg:#f4f7fb;--card:#fff;--text:#172b4d;--muted:#6b7c93;--green:#178344;--amber:#b7791f;--red:#c53030}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-header{background:var(--navy);color:#fff;padding:22px 28px}h1{margin:0;font-size:28px;letter-spacing:.4px}header p{margin:6px 0 0;color:#d9e6f2}
+header{background:var(--navy);color:white;padding:22px 28px}h1{margin:0;font-size:28px}header p{margin:6px 0 0;color:#d9e6f2}
 .wrap{padding:20px;max-width:1600px;margin:auto}.filters,.cards,.grid{display:grid;gap:14px}.filters{grid-template-columns:repeat(4,1fr);margin-bottom:14px}
-select,input{width:100%;padding:11px;border:1px solid #d8e0ea;border-radius:8px;background:#fff}.cards{grid-template-columns:repeat(6,1fr)}
-.card,.panel{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 2px 10px #102a4312}.label{font-size:12px;color:var(--muted);font-weight:700}.value{font-size:25px;font-weight:800;margin-top:7px}
-.grid{grid-template-columns:1fr 1fr;margin-top:14px}.panel h2{font-size:16px;margin:0 0 12px}
-.bar{display:grid;grid-template-columns:180px 1fr 65px;gap:10px;align-items:center;margin:9px 0;font-size:12px}.track{height:10px;background:#edf2f7;border-radius:10px;overflow:hidden}.fill{height:100%;background:var(--blue)}
-table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #edf2f7;text-align:left}th{position:sticky;top:0;background:#eaf1f8}.tablewrap{max-height:430px;overflow:auto}
+select,input{width:100%;padding:11px;border:1px solid #d8e0ea;border-radius:8px;background:white}.cards{grid-template-columns:repeat(5,1fr)}
+.card,.panel{background:white;border-radius:12px;padding:16px;box-shadow:0 2px 10px #102a4312}.label{font-size:12px;color:var(--muted);font-weight:700}.value{font-size:25px;font-weight:800;margin-top:7px}
+.grid{grid-template-columns:1fr 1fr;margin-top:14px}.panel h2{font-size:16px;margin:0 0 12px}.bar{display:grid;grid-template-columns:180px 1fr 65px;gap:10px;align-items:center;margin:9px 0;font-size:12px}
+.track{height:10px;background:#edf2f7;border-radius:10px;overflow:hidden}.fill{height:100%;background:var(--blue)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #edf2f7;text-align:left}th{position:sticky;top:0;background:#eaf1f8}.tablewrap{max-height:460px;overflow:auto}
 .badge{padding:4px 7px;border-radius:12px;font-weight:700;font-size:11px}.g{background:#d9f2e3;color:var(--green)}.a{background:#fff1c7;color:var(--amber)}.r{background:#fde2e2;color:var(--red)}
-.note{font-size:12px;color:var(--muted);margin-top:14px}
-@media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}.filters,.grid{grid-template-columns:1fr 1fr}}
-@media(max-width:650px){.cards,.filters,.grid{grid-template-columns:1fr}.bar{grid-template-columns:120px 1fr 55px}header{padding:18px}}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}.filters,.grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.cards,.filters,.grid{grid-template-columns:1fr}}
 </style></head>
-<body><header><h1>JULY TRIP CPK DASHBOARD</h1><p>Ops Review • Contract CPK × Trip Utilisation</p></header>
+<body><header><h1>JULY TRIP UTILISATION DASHBOARD</h1><p>Ops Review • Trip, lane and vehicle utilisation</p></header>
 <div class="wrap">
-<div class="filters">
-<select id="facility"><option value="">All Facilities</option></select>
-<select id="vehicle"><option value="">All Vehicle Types</option></select>
-<select id="subtype"><option value="">All Route Subtypes</option></select>
-<input id="search" placeholder="Search destination / trip / vehicle no.">
-</div>
+<div class="filters"><select id="facility"><option value="">All Facilities</option></select><select id="vehicle"><option value="">All Vehicle Types</option></select><select id="subtype"><option value="">All Route Subtypes</option></select><input id="search" placeholder="Search destination / trip / vehicle no."></div>
 <div class="cards">
 <div class="card"><div class="label">TOTAL TRIPS</div><div class="value" id="trips"></div></div>
-<div class="card"><div class="label">MATCHED TRIPS</div><div class="value" id="matched"></div></div>
-<div class="card"><div class="label">AVG CONTRACT CPK</div><div class="value" id="cpk"></div></div>
 <div class="card"><div class="label">AVG UTILISATION</div><div class="value" id="util"></div></div>
+<div class="card"><div class="label">GOOD UTIL ≥75%</div><div class="value" id="good"></div></div>
+<div class="card"><div class="label">WATCH 50–74.9%</div><div class="value" id="watch"></div></div>
 <div class="card"><div class="label">LOW UTIL &lt;50%</div><div class="value" id="low"></div></div>
-<div class="card"><div class="label">UNIQUE CONTRACTS</div><div class="value" id="contracts"></div></div>
 </div>
-<div class="grid">
-<div class="panel"><h2>Vehicle Type — Trip Volume</h2><div id="vehicleBars"></div></div>
-<div class="panel"><h2>Lane — Average CPK</h2><div id="laneBars"></div></div>
-</div>
-<div class="panel" style="margin-top:14px"><h2>Trip Drill-down</h2><div class="tablewrap"><table>
-<thead><tr><th>Facility</th><th>Destination</th><th>Vehicle</th><th>Trip</th><th>Contract</th><th>Util %</th><th>CPK</th><th>Status</th></tr></thead><tbody id="body"></tbody></table></div>
-<div class="note">CPK shown is Contract CPK = Monthly Fixed Cost ÷ Contracted KM/month. Actual trip KM is not present in the trip utilisation source, so this is not actual trip-cost-per-km.</div></div>
+<div class="grid"><div class="panel"><h2>Vehicle Type — Trip Volume</h2><div id="vehicleBars"></div></div><div class="panel"><h2>Lane — Average Utilisation</h2><div id="laneBars"></div></div></div>
+<div class="panel" style="margin-top:14px"><h2>Trip Drill-down</h2><div class="tablewrap"><table><thead><tr><th>Facility</th><th>Destination</th><th>Route Subtype</th><th>Vehicle</th><th>Vehicle No.</th><th>Trip</th><th>Utilisation</th><th>Status</th></tr></thead><tbody id="body"></tbody></table></div></div>
 </div>
 <script>
-const D=window.TRIP_DATA;
-const $=id=>document.getElementById(id);
+const D=window.TRIP_DATA,$=id=>document.getElementById(id);
 function options(id,key){[...new Set(D.map(x=>x[key]).filter(Boolean))].sort().forEach(v=>{let o=document.createElement('option');o.value=o.textContent=v;$(id).appendChild(o)})}
 options('facility','facility');options('vehicle','vehicle');options('subtype','subtype');
-function filtered(){let q=$('search').value.toLowerCase();return D.filter(x=>(!$('facility').value||x.facility===$('facility').value)&&(!$('vehicle').value||x.vehicle===$('vehicle').value)&&(!$('subtype').value||x.subtype===$('subtype').value)&&(!q||[x.destination,x.trip,x.vehicleNo,x.contractCode].join(' ').toLowerCase().includes(q)))}
-function avg(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:0}
-function rag(u){return u>=75?'g':u>=50?'a':'r'}
-function bars(el,groups,valueFmt){let max=Math.max(...groups.map(x=>x[1]),1);$(el).innerHTML=groups.slice(0,10).map(x=>`<div class="bar"><div title="${x[0]}">${x[0].slice(0,28)}</div><div class="track"><div class="fill" style="width:${x[1]/max*100}%"></div></div><b>${valueFmt(x[1])}</b></div>`).join('')}
-function render(){let a=filtered(),m=a.filter(x=>x.cpk!==null);$('trips').textContent=a.length.toLocaleString();$('matched').textContent=m.length.toLocaleString();$('cpk').textContent='₹ '+avg(m.map(x=>x.cpk)).toFixed(2)+'/KM';$('util').textContent=avg(m.map(x=>x.util)).toFixed(1)+'%';$('low').textContent=m.filter(x=>x.util<50).length.toLocaleString();$('contracts').textContent=new Set(m.map(x=>x.contractId)).size;
+function filtered(){let q=$('search').value.toLowerCase();return D.filter(x=>(!$('facility').value||x.facility===$('facility').value)&&(!$('vehicle').value||x.vehicle===$('vehicle').value)&&(!$('subtype').value||x.subtype===$('subtype').value)&&(!q||[x.destination,x.trip,x.vehicleNo].join(' ').toLowerCase().includes(q)))}
+function avg(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:0} function cls(u){return u>=75?'g':u>=50?'a':'r'} function stat(u){return u>=75?'Good':u>=50?'Watch':'Low Util'}
+function bars(el,groups,fmt){let max=Math.max(...groups.map(x=>x[1]),1);$(el).innerHTML=groups.slice(0,10).map(x=>`<div class="bar"><div title="${x[0]}">${String(x[0]).slice(0,28)}</div><div class="track"><div class="fill" style="width:${x[1]/max*100}%"></div></div><b>${fmt(x[1])}</b></div>`).join('')}
+function render(){let a=filtered();$('trips').textContent=a.length.toLocaleString();$('util').textContent=avg(a.map(x=>x.util)).toFixed(1)+'%';$('good').textContent=a.filter(x=>x.util>=75).length.toLocaleString();$('watch').textContent=a.filter(x=>x.util>=50&&x.util<75).length.toLocaleString();$('low').textContent=a.filter(x=>x.util<50).length.toLocaleString();
 let vg={};a.forEach(x=>vg[x.vehicle]=(vg[x.vehicle]||0)+1);bars('vehicleBars',Object.entries(vg).sort((a,b)=>b[1]-a[1]),v=>v);
-let lg={};m.forEach(x=>{let k=x.destination||'Unknown';(lg[k]??=[]).push(x.cpk)});bars('laneBars',Object.entries(lg).map(([k,v])=>[k,avg(v)]).sort((a,b)=>b[1]-a[1]),v=>'₹'+v.toFixed(1));
-$('body').innerHTML=a.slice(0,500).map(x=>`<tr><td>${x.facility||''}</td><td>${x.destination||''}</td><td>${x.vehicle||''}</td><td>${x.trip||''}</td><td>${x.contractCode||'Not matched'}</td><td>${x.util.toFixed(1)}%</td><td>${x.cpk===null?'—':'₹ '+x.cpk.toFixed(2)}</td><td><span class="badge ${rag(x.util)}">${x.util>=75?'Good':x.util>=50?'Watch':'Low Util'}</span></td></tr>`).join('')}
+let lg={};a.forEach(x=>{let k=x.destination||'Unknown';(lg[k]??=[]).push(x.util)});bars('laneBars',Object.entries(lg).map(([k,v])=>[k,avg(v)]).sort((a,b)=>b[1]-a[1]),v=>v.toFixed(1)+'%');
+$('body').innerHTML=a.slice(0,500).map(x=>`<tr><td>${x.facility||''}</td><td>${x.destination||''}</td><td>${x.subtype||''}</td><td>${x.vehicle||''}</td><td>${x.vehicleNo||''}</td><td>${x.trip||''}</td><td>${x.util.toFixed(1)}%</td><td><span class="badge ${cls(x.util)}">${stat(x.util)}</span></td></tr>`).join('')}
 ['facility','vehicle','subtype'].forEach(id=>$(id).onchange=render);$('search').oninput=render;render();
 </script></body></html>
