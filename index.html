@@ -121,6 +121,14 @@ $('newFile').onclick=()=>{pendingFile=null;$('file').value='';$('selected').text
 function buildOptions(){for(const id of ['month','facility','transit','routeType','vehicle','subtype'])$(id).innerHTML='<option value="">'+({month:'All Months',facility:'All Facilities',transit:'All Next Transit Centres',routeType:'All Route Types',vehicle:'All Vehicle Types',subtype:'All Route Subtypes'}[id])+'</option>';
  [...new Set(D.map(x=>x.month).filter(Boolean))].sort().forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=monthLabel(v);$('month').appendChild(o)});
  [['facility','facility'],['transit','destination'],['routeType','routeType'],['vehicle','vehicle'],['subtype','subtype']].forEach(([id,key])=>[...new Set(D.map(x=>x[key]).filter(Boolean))].sort().forEach(v=>{let o=document.createElement('option');o.value=o.textContent=v;$(id).appendChild(o)}))}
+function updateTransitOptions(){
+ let selected=$('transit').value;
+ let facility=$('facility').value;
+ let values=[...new Set(D.filter(x=>!facility||x.facility===facility).map(x=>x.destination).filter(Boolean))].sort();
+ $('transit').innerHTML='<option value="">All Next Transit Centres</option>';
+ values.forEach(v=>{let o=document.createElement('option');o.value=o.textContent=v;$('transit').appendChild(o)});
+ if(values.includes(selected))$('transit').value=selected;
+}
 function filtered(){let q=$('search').value.toLowerCase();return D.filter(x=>(!$('month').value||x.month===$('month').value)&&(!$('facility').value||x.facility===$('facility').value)&&(!$('transit').value||x.destination===$('transit').value)&&(!$('routeType').value||x.routeType===$('routeType').value)&&(!$('vehicle').value||x.vehicle===$('vehicle').value)&&(!$('subtype').value||x.subtype===$('subtype').value)&&(!q||[x.destination,x.trip,x.vehicleNo].join(' ').toLowerCase().includes(q)))}
 function avg(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:0} function cls(u){return u>=75?'g':u>=50?'a':'r'} function stat(u){return u>=75?'Good':u>=50?'Watch':'Low Util'}
 function bars(el,groups,fmt){let max=Math.max(...groups.map(x=>x[1]),1);$(el).innerHTML=groups.slice(0,10).map(x=>`<div class="bar"><div title="${x[0]}">${String(x[0]).slice(0,28)}</div><div class="track"><div class="fill" style="width:${x[1]/max*100}%"></div></div><b>${fmt(x[1])}</b></div>`).join('')}
@@ -130,6 +138,7 @@ function render(){let a=filtered();let sk=$('sortBy')?.value,sd=$('sortDir')?.va
  $('body').innerHTML=a.slice(0,500).map(x=>`<tr><td>${x.facility}</td><td>${x.destination}</td><td>${x.routeType}</td><td>${x.subtype}</td><td>${x.vehicle}</td><td>${x.vehicleNo}</td><td>${x.trip}</td><td>${x.util.toFixed(1)}%</td><td><button class="viewbtn" onclick="showUtil(event,${x.volUtil===null?'null':x.volUtil},${x.weightUtil===null?'null':x.weightUtil})">View</button></td><td><span class="badge ${cls(x.util)}">${stat(x.util)}</span></td></tr>`).join('')}
 function showUtil(e,v,w){e.stopPropagation();let p=$('utilPop');$('popVol').textContent=v===null?'Not available':v.toFixed(1)+'%';$('popWt').textContent=w===null?'Not available':w.toFixed(1)+'%';let r=e.currentTarget.getBoundingClientRect();p.style.left=Math.min(r.left,window.innerWidth-230)+'px';p.style.top=Math.min(r.bottom+6,window.innerHeight-110)+'px';p.classList.remove('hidden')}
 document.addEventListener('click',()=>{let p=$('utilPop');if(p)p.classList.add('hidden')});
-['month','facility','transit','routeType','vehicle','subtype'].forEach(id=>$(id).onchange=render);$('search').oninput=render;$('sortBy').onchange=render;$('sortDir').onchange=render;
+$('facility').onchange=()=>{updateTransitOptions();render()};
+['month','transit','routeType','vehicle','subtype'].forEach(id=>$(id).onchange=render);$('search').oninput=render;$('sortBy').onchange=render;$('sortDir').onchange=render;
 </script>
 </body></html>
