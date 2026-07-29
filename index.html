@@ -75,8 +75,8 @@ const aliases={
  vehicleNo:['vehicle_number','vehicle number','vehicle_no','vehicle no','registration_number'],
  trip:['trip_uuid','trip uuid','trip_id','trip id','trip'],
  util:['utilisation','utilization','utilisation %','utilization %','utilisation%','utilization%','uti'],
- volUtil:['volumetric_utilisation','volumetric utilization','volumetric utilisation %','volumetric utilization %','volumetric_utilization','volume utilisation','volume utilization','vol utilisation','vol utilization'],
- weightUtil:['weight_utilisation','weight utilization','weight utilisation %','weight utilization %','weight_utilization','wt utilisation','wt utilization']
+ volUtil:['vol_uti','volumetric_utilisation','volumetric utilization','volumetric utilisation %','volumetric utilization %','volumetric_utilization','volume utilisation','volume utilization','vol utilisation','vol utilization'],
+ weightUtil:['wt_uti','weight_utilisation','weight utilization','weight utilisation %','weight utilization %','weight_utilization','wt utilisation','wt utilization']
 };
 function norm(s){return String(s??'').trim().toLowerCase().replace(/\s+/g,' ')}
 function findKey(row,names){let keys=Object.keys(row),map={};keys.forEach(k=>map[norm(k)]=k);for(const n of names){if(map[norm(n)]!==undefined)return map[norm(n)]}return null}
