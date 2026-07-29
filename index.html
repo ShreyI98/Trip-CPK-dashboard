@@ -8,7 +8,7 @@
 :root{--navy:#102a43;--blue:#2867b2;--bg:#f4f7fb;--card:#fff;--text:#172b4d;--muted:#6b7c93;--green:#178344;--amber:#b7791f;--red:#c53030}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
 header{background:var(--navy);color:#fff;padding:22px 28px}h1{margin:0;font-size:28px}header p{margin:6px 0 0;color:#d9e6f2}
-.wrap{padding:20px;max-width:1600px;margin:auto}.upload{max-width:760px;margin:55px auto;background:#fff;padding:34px;border-radius:16px;box-shadow:0 5px 25px #102a4318;text-align:center}
+.wrap{padding:20px;max-width:1600px;margin:auto}.login{max-width:420px;margin:80px auto;background:#fff;padding:34px;border-radius:16px;box-shadow:0 5px 25px #102a4318;text-align:center}.login input{width:100%;padding:12px;border:1px solid #d8e0ea;border-radius:8px;margin:14px 0}.loginerr{color:var(--red);font-size:13px;min-height:18px;margin-top:10px}.upload{max-width:760px;margin:55px auto;background:#fff;padding:34px;border-radius:16px;box-shadow:0 5px 25px #102a4318;text-align:center}
 .drop{border:2px dashed #a9bfd5;border-radius:14px;padding:42px 20px;margin:22px 0;background:#f8fbff}.drop.drag{border-color:var(--blue);background:#eef6ff}
 button{border:0;border-radius:8px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}.secondary{background:#e8eef5;color:var(--text)}
 .err{color:var(--red);font-size:13px;min-height:18px;margin-top:12px}.hint{font-size:13px;color:var(--muted);line-height:1.5}
@@ -30,7 +30,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;borde
 <body>
 <header><h1>TRIP UTILISATION DASHBOARD</h1><p>Upload raw trip data and generate the Ops Review dashboard</p></header>
 
-<section id="uploadScreen" class="wrap">
+<section id="loginScreen" class="wrap">
+<div class="login"><h2>Dashboard Access</h2><p class="hint">Enter password to access the Trip Utilisation Dashboard.</p>
+<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+<button id="loginBtn">Login</button><div id="loginError" class="loginerr"></div></div>
+</section>
+<section id="uploadScreen" class="wrap hidden">
 <div class="upload">
 <h2>Upload Raw Data</h2>
 <p class="hint">Upload the trip utilisation dump in Excel (.xlsx/.xls) or CSV format. Processing happens in your browser.</p>
@@ -65,6 +70,10 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;borde
 
 <script>
 let D=[],pendingFile=null; const $=id=>document.getElementById(id);
+function login(){if($('loginPassword').value==='TRIPPING'){sessionStorage.setItem('tripDashboardAuth','1');$('loginScreen').classList.add('hidden');$('uploadScreen').classList.remove('hidden');$('loginError').textContent=''}else{$('loginError').textContent='Incorrect password.';$('loginPassword').select()}}
+$('loginBtn').onclick=login;$('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+if(sessionStorage.getItem('tripDashboardAuth')==='1'){$('loginScreen').classList.add('hidden');$('uploadScreen').classList.remove('hidden')}
+
 const aliases={
  date:['dat','date','trip_date','trip date','departure_date','departure date'],
  facility:['facility','facility_name','center','centre'],
