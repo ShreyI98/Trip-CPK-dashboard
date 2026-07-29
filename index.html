@@ -12,7 +12,7 @@ header{background:var(--navy);color:#fff;padding:22px 28px}h1{margin:0;font-size
 .drop{border:2px dashed #a9bfd5;border-radius:14px;padding:42px 20px;margin:22px 0;background:#f8fbff}.drop.drag{border-color:var(--blue);background:#eef6ff}
 button{border:0;border-radius:8px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}.secondary{background:#e8eef5;color:var(--text)}
 .err{color:var(--red);font-size:13px;min-height:18px;margin-top:12px}.hint{font-size:13px;color:var(--muted);line-height:1.5}
-.filters,.cards,.grid{display:grid;gap:14px}.filters{grid-template-columns:repeat(7,1fr);margin-bottom:14px}
+.filters,.cards,.grid{display:grid;gap:14px}.filters{grid-template-columns:repeat(8,1fr);margin-bottom:14px}
 select,input[type=text]{width:100%;padding:11px;border:1px solid #d8e0ea;border-radius:8px;background:#fff}.cards{grid-template-columns:repeat(5,1fr)}
 .card,.panel{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 10px #102a4312}.label{font-size:12px;color:var(--muted);font-weight:700}.value{font-size:25px;font-weight:800;margin-top:7px}
 .grid{grid-template-columns:1fr 1fr;margin-top:14px}.panel h2{font-size:16px;margin:0 0 12px}.bar{display:grid;grid-template-columns:180px 1fr 65px;gap:10px;align-items:center;margin:9px 0;font-size:12px}
@@ -30,11 +30,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;borde
 <body>
 <header><h1>TRIP UTILISATION DASHBOARD</h1><p>Upload raw trip data and generate the Ops Review dashboard</p></header>
 
-<section id="loginScreen" class="wrap">
-<div class="login"><h2>Dashboard Access</h2><p class="hint">Enter password to access the Trip Utilisation Dashboard.</p>
-<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
-<button id="loginBtn">Login</button><div id="loginError" class="loginerr"></div></div>
-</section>
+<section id="loginScreen" class="wrap"><div class="login"><h2>Dashboard Access</h2><p class="hint">Enter password to access the Trip Utilisation Dashboard.</p><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"><button id="loginBtn">Login</button><div id="loginError" class="loginerr"></div></div></section>
 <section id="uploadScreen" class="wrap hidden">
 <div class="upload">
 <h2>Upload Raw Data</h2>
@@ -55,7 +51,7 @@ table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;borde
 
 <section id="dash" class="wrap hidden">
 <div class="toprow"><div><b id="loadedName"></b><div class="filename" id="loadedCount"></div></div><button id="newFile" class="secondary">Upload New Data</button></div>
-<div class="filters"><select id="month"><option value="">All Months</option></select><select id="facility"><option value="">All Facilities</option></select><select id="transit"><option value="">All Next Transit Centres</option></select><select id="routeType"><option value="">All Route Types</option></select><select id="vehicle"><option value="">All Vehicle Types</option></select><select id="subtype"><option value="">All Route Subtypes</option></select><input id="search" type="text" placeholder="Search destination / trip / vehicle no."></div>
+<div class="filters"><select id="month"><option value="">All Months</option></select><select id="dateFilter"><option value="">All Dates</option></select><select id="facility"><option value="">All Facilities</option></select><select id="transit"><option value="">All Next Transit Centres</option></select><select id="routeType"><option value="">All Route Types</option></select><select id="vehicle"><option value="">All Vehicle Types</option></select><select id="subtype"><option value="">All Route Subtypes</option></select><input id="search" type="text" placeholder="Search destination / trip / vehicle no."></div>
 <div class="cards">
 <div class="card"><div class="label">TOTAL TRIPS</div><div class="value" id="trips"></div></div>
 <div class="card"><div class="label">AVG UTILISATION</div><div class="value" id="util"></div></div>
@@ -90,6 +86,16 @@ const aliases={
 function norm(s){return String(s??'').trim().toLowerCase().replace(/\s+/g,' ')}
 function findKey(row,names){let keys=Object.keys(row),map={};keys.forEach(k=>map[norm(k)]=k);for(const n of names){if(map[norm(n)]!==undefined)return map[norm(n)]}return null}
 function num(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='string')v=v.replace('%','').replace(',','').trim();let n=Number(v);if(!isFinite(n))return 0;return n<=1&&n>=0?n*100:n}
+function dateValue(v){
+ if(v===null||v===undefined||v==='')return '';
+ let d;
+ if(v instanceof Date)d=v;
+ else if(typeof v==='number'&&v>20000){let o=XLSX.SSF.parse_date_code(v);if(o)d=new Date(o.y,o.m-1,o.d);}
+ else d=new Date(v);
+ if(!d||isNaN(d))return '';
+ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dateLabel(v){if(!v)return '';let [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'});}
 function monthValue(v){
  if(v===null||v===undefined||v==='')return '';
  let d;
@@ -111,7 +117,7 @@ function mapRows(rows){
  let required=['facility','destination','vehicle','trip','util'],missing=required.filter(k=>!keys[k]);
  if(missing.length)throw new Error('Required columns not found: '+missing.join(', ')+'. Please check the raw-data headers.');
  return rows.filter(r=>Object.values(r).some(v=>v!==null&&v!=='')).map(r=>({
- month:keys.date?monthValue(r[keys.date]):'',facility:r[keys.facility]??'',destination:r[keys.destination]??'',routeType:keys.routeType?r[keys.routeType]??'':'',subtype:keys.subtype?r[keys.subtype]??'':'',
+ month:keys.date?monthValue(r[keys.date]):'',date:keys.date?dateValue(r[keys.date]):'',facility:r[keys.facility]??'',destination:r[keys.destination]??'',routeType:keys.routeType?r[keys.routeType]??'':'',subtype:keys.subtype?r[keys.subtype]??'':'',
  vehicle:r[keys.vehicle]??'',vehicleNo:keys.vehicleNo?r[keys.vehicleNo]??'':'',trip:r[keys.trip]??'',util:num(r[keys.util]),volUtil:keys.volUtil?num(r[keys.volUtil]):null,weightUtil:keys.weightUtil?num(r[keys.weightUtil]):null
  }));
 }
@@ -127,18 +133,24 @@ $('generate').onclick=async()=>{if(!pendingFile)return; $('generate').disabled=t
  try{D=await readFile(pendingFile);buildOptions();$('loadedName').textContent=pendingFile.name;$('loadedCount').textContent=D.length.toLocaleString()+' trips loaded';$('uploadScreen').classList.add('hidden');$('dash').classList.remove('hidden');render()}
  catch(e){$('error').textContent=e.message||'Could not process this file.'} finally{$('generate').disabled=false;$('generate').textContent='Generate Dashboard'}};
 $('newFile').onclick=()=>{pendingFile=null;$('file').value='';$('selected').textContent='';$('generate').classList.add('hidden');$('dash').classList.add('hidden');$('uploadScreen').classList.remove('hidden')};
-function buildOptions(){for(const id of ['month','facility','transit','routeType','vehicle','subtype'])$(id).innerHTML='<option value="">'+({month:'All Months',facility:'All Facilities',transit:'All Next Transit Centres',routeType:'All Route Types',vehicle:'All Vehicle Types',subtype:'All Route Subtypes'}[id])+'</option>';
+function buildOptions(){for(const id of ['month','dateFilter','facility','transit','routeType','vehicle','subtype'])$(id).innerHTML='<option value="">'+({month:'All Months',dateFilter:'All Dates',facility:'All Facilities',transit:'All Next Transit Centres',routeType:'All Route Types',vehicle:'All Vehicle Types',subtype:'All Route Subtypes'}[id])+'</option>';
  [...new Set(D.map(x=>x.month).filter(Boolean))].sort().forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=monthLabel(v);$('month').appendChild(o)});
  [['facility','facility'],['transit','destination'],['routeType','routeType'],['vehicle','vehicle'],['subtype','subtype']].forEach(([id,key])=>[...new Set(D.map(x=>x[key]).filter(Boolean))].sort().forEach(v=>{let o=document.createElement('option');o.value=o.textContent=v;$(id).appendChild(o)}))}
+function updateDateOptions(){
+ let selected=$('dateFilter').value,month=$('month').value;
+ let values=[...new Set(D.filter(x=>!month||x.month===month).map(x=>x.date).filter(Boolean))].sort();
+ $('dateFilter').innerHTML='<option value="">All Dates</option>';
+ values.forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent=dateLabel(v);$('dateFilter').appendChild(o)});
+ if(values.includes(selected))$('dateFilter').value=selected;
+}
 function updateTransitOptions(){
- let selected=$('transit').value;
- let facility=$('facility').value;
+ let selected=$('transit').value,facility=$('facility').value;
  let values=[...new Set(D.filter(x=>!facility||x.facility===facility).map(x=>x.destination).filter(Boolean))].sort();
  $('transit').innerHTML='<option value="">All Next Transit Centres</option>';
  values.forEach(v=>{let o=document.createElement('option');o.value=o.textContent=v;$('transit').appendChild(o)});
  if(values.includes(selected))$('transit').value=selected;
 }
-function filtered(){let q=$('search').value.toLowerCase();return D.filter(x=>(!$('month').value||x.month===$('month').value)&&(!$('facility').value||x.facility===$('facility').value)&&(!$('transit').value||x.destination===$('transit').value)&&(!$('routeType').value||x.routeType===$('routeType').value)&&(!$('vehicle').value||x.vehicle===$('vehicle').value)&&(!$('subtype').value||x.subtype===$('subtype').value)&&(!q||[x.destination,x.trip,x.vehicleNo].join(' ').toLowerCase().includes(q)))}
+function filtered(){let q=$('search').value.toLowerCase();return D.filter(x=>(!$('month').value||x.month===$('month').value)&&(!$('dateFilter').value||x.date===$('dateFilter').value)&&(!$('facility').value||x.facility===$('facility').value)&&(!$('transit').value||x.destination===$('transit').value)&&(!$('routeType').value||x.routeType===$('routeType').value)&&(!$('vehicle').value||x.vehicle===$('vehicle').value)&&(!$('subtype').value||x.subtype===$('subtype').value)&&(!q||[x.destination,x.trip,x.vehicleNo].join(' ').toLowerCase().includes(q)))}
 function avg(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:0} function cls(u){return u>=75?'g':u>=50?'a':'r'} function stat(u){return u>=75?'Good':u>=50?'Watch':'Low Util'}
 function bars(el,groups,fmt){let max=Math.max(...groups.map(x=>x[1]),1);$(el).innerHTML=groups.slice(0,10).map(x=>`<div class="bar"><div title="${x[0]}">${String(x[0]).slice(0,28)}</div><div class="track"><div class="fill" style="width:${x[1]/max*100}%"></div></div><b>${fmt(x[1])}</b></div>`).join('')}
 function render(){let a=filtered();let sk=$('sortBy')?.value,sd=$('sortDir')?.value||'asc';if(sk){a=[...a].sort((x,y)=>{let xv=x[sk],yv=y[sk];if(xv===null||xv===undefined)return 1;if(yv===null||yv===undefined)return -1;let c=(typeof xv==='number'&&typeof yv==='number')?xv-yv:String(xv).localeCompare(String(yv),undefined,{numeric:true,sensitivity:'base'});return sd==='desc'?-c:c})}$('trips').textContent=a.length.toLocaleString();$('util').textContent=avg(a.map(x=>x.util)).toFixed(1)+'%';$('good').textContent=a.filter(x=>x.util>=75).length.toLocaleString();$('watch').textContent=a.filter(x=>x.util>=50&&x.util<75).length.toLocaleString();$('low').textContent=a.filter(x=>x.util<50).length.toLocaleString();
@@ -147,7 +159,6 @@ function render(){let a=filtered();let sk=$('sortBy')?.value,sd=$('sortDir')?.va
  $('body').innerHTML=a.slice(0,500).map(x=>`<tr><td>${x.facility}</td><td>${x.destination}</td><td>${x.routeType}</td><td>${x.subtype}</td><td>${x.vehicle}</td><td>${x.vehicleNo}</td><td>${x.trip}</td><td>${x.util.toFixed(1)}%</td><td><button class="viewbtn" onclick="showUtil(event,${x.volUtil===null?'null':x.volUtil},${x.weightUtil===null?'null':x.weightUtil})">View</button></td><td><span class="badge ${cls(x.util)}">${stat(x.util)}</span></td></tr>`).join('')}
 function showUtil(e,v,w){e.stopPropagation();let p=$('utilPop');$('popVol').textContent=v===null?'Not available':v.toFixed(1)+'%';$('popWt').textContent=w===null?'Not available':w.toFixed(1)+'%';let r=e.currentTarget.getBoundingClientRect();p.style.left=Math.min(r.left,window.innerWidth-230)+'px';p.style.top=Math.min(r.bottom+6,window.innerHeight-110)+'px';p.classList.remove('hidden')}
 document.addEventListener('click',()=>{let p=$('utilPop');if(p)p.classList.add('hidden')});
-$('facility').onchange=()=>{updateTransitOptions();render()};
-['month','transit','routeType','vehicle','subtype'].forEach(id=>$(id).onchange=render);$('search').oninput=render;$('sortBy').onchange=render;$('sortDir').onchange=render;
+$('month').onchange=()=>{updateDateOptions();render()};$('facility').onchange=()=>{updateTransitOptions();render()};['dateFilter','transit','routeType','vehicle','subtype'].forEach(id=>$(id).onchange=render);$('search').oninput=render;$('sortBy').onchange=render;$('sortDir').onchange=render;
 </script>
 </body></html>
